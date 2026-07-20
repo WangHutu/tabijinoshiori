@@ -1,0 +1,64 @@
+---
+import { Icon } from "astro-icon/components";
+import PostCard from "@components/PostCard.astro";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { getSortedPosts } from "@utils/content-utils";
+import { getPostUrlBySlug } from "@utils/url-utils";
+
+const travelKeywords = ["travel", "旅行", "旅游", "旅遊"];
+const posts = await getSortedPosts();
+const travelPosts = posts.filter((post) => {
+	const category = post.data.category?.toLowerCase().trim() ?? "";
+	const tags = post.data.tags.map((tag) => tag.toLowerCase().trim());
+
+	return travelKeywords.some((keyword) => {
+		const normalizedKeyword = keyword.toLowerCase();
+		return category === normalizedKeyword || tags.includes(normalizedKeyword);
+	});
+});
+---
+
+<MainGridLayout title="Travel" description="Travel notes and memories">
+	<section class="mb-5 rounded-[var(--radius-large)] card-base px-6 py-7 md:px-9">
+		<p class="mb-2 text-sm font-medium uppercase tracking-[0.18em] text-[var(--primary)]">Travel</p>
+		<h1 class="mb-3 text-3xl font-bold text-90">旅行手记</h1>
+		<p class="max-w-2xl text-75">
+			记录去过的地方、路上的风景，以及想再次回味的瞬间。
+		</p>
+	</section>
+
+	{
+		travelPosts.length > 0 ? (
+			<div class="transition flex flex-col rounded-[var(--radius-large)] bg-[var(--card-bg)] py-1 md:py-0 md:bg-transparent md:gap-4 mb-4">
+				{travelPosts.map((entry, index) => (
+					<PostCard
+						entry={entry}
+						title={entry.data.title}
+						tags={entry.data.tags}
+						category={entry.data.category}
+						published={entry.data.published}
+						updated={entry.data.updated}
+						url={getPostUrlBySlug(entry.slug)}
+						image={entry.data.image}
+						description={entry.data.description}
+						draft={entry.data.draft}
+						class:list="onload-animation"
+						style={`animation-delay: calc(var(--content-delay) + ${index * 50}ms);`}
+					/>
+				))}
+			</div>
+		) : (
+			<section class="card-base rounded-[var(--radius-large)] px-6 py-12 text-center md:px-9">
+				<Icon
+					name="material-symbols:travel-explore-rounded"
+					class="mx-auto mb-4 text-6xl text-[var(--primary)] opacity-70"
+				/>
+				<h2 class="mb-2 text-2xl font-bold text-90">还没有旅行文章</h2>
+				<p class="text-75">
+					给文章添加 `Travel` 分类，或添加 `travel` / `旅行` 标签后，会显示在这里。
+				</p>
+			</section>
+		)
+	}
+</MainGridLayout>
+

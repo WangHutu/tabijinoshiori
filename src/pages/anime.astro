@@ -1,0 +1,108 @@
+---
+import path from "node:path";
+import { Icon } from "astro-icon/components";
+import ImageWrapper from "@components/misc/ImageWrapper.astro";
+import MainGridLayout from "@layouts/MainGridLayout.astro";
+import { getSortedPosts } from "@utils/content-utils";
+import { formatDateToYYYYMMDD } from "@utils/date-utils";
+import { getDir, getPostUrlBySlug } from "@utils/url-utils";
+
+const animeKeywords = ["anime", "动画", "動漫", "アニメ"];
+const posts = await getSortedPosts();
+const animePosts = posts.filter((post) => {
+	const category = post.data.category?.toLowerCase().trim() ?? "";
+	const tags = post.data.tags.map((tag) => tag.toLowerCase().trim());
+
+	return animeKeywords.some((keyword) => {
+		const normalizedKeyword = keyword.toLowerCase();
+		return category === normalizedKeyword || tags.includes(normalizedKeyword);
+	});
+});
+---
+
+<MainGridLayout title="Anime" description="Anime notes and reviews">
+	<section class="mb-5 rounded-[var(--radius-large)] card-base px-6 py-7 md:px-9">
+		<p class="mb-2 text-sm font-medium uppercase tracking-[0.18em] text-[var(--primary)]">Anime</p>
+		<h1 class="mb-3 text-3xl font-bold text-90">动画记录</h1>
+		<p class="max-w-2xl text-75">
+			整理看过、喜欢和想要留下来的动画故事。
+		</p>
+	</section>
+
+	{
+		animePosts.length > 0 ? (
+			<section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+				{animePosts.map((entry, index) => {
+					const hasCover = Boolean(entry.data.image);
+
+					return (
+						<a
+							href={getPostUrlBySlug(entry.slug)}
+							aria-label={entry.data.title}
+							class="group card-base onload-animation flex min-h-full flex-col overflow-hidden rounded-[var(--radius-large)] active:scale-95"
+							style={`animation-delay: calc(var(--content-delay) + ${index * 50}ms);`}
+						>
+							<div class="relative aspect-[16/10] overflow-hidden bg-[var(--btn-regular-bg)]">
+								{hasCover ? (
+									<ImageWrapper
+										src={entry.data.image}
+										basePath={path.join("content/posts/", getDir(entry.id))}
+										alt={`Cover Image of ${entry.data.title}`}
+										class="h-full w-full transition duration-500 group-hover:scale-105"
+									/>
+								) : (
+									<div class="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,var(--btn-regular-bg),var(--card-bg))]">
+										<Icon
+											name="material-symbols:movie-outline-rounded"
+											class="text-6xl text-[var(--primary)] opacity-70 transition group-hover:scale-110"
+										/>
+									</div>
+								)}
+								<div class="absolute inset-0 bg-black/0 transition group-hover:bg-black/15"></div>
+							</div>
+
+							<div class="flex flex-1 flex-col px-5 pb-5 pt-4">
+								<div class="mb-3 flex items-center gap-2 text-sm text-black/40 transition dark:text-white/40">
+									<Icon name="material-symbols:calendar-month-outline-rounded" class="text-lg" />
+									<time datetime={formatDateToYYYYMMDD(entry.data.published)}>
+										{formatDateToYYYYMMDD(entry.data.published)}
+									</time>
+								</div>
+
+								<h2 class="mb-3 line-clamp-2 text-xl font-bold text-90 transition group-hover:text-[var(--primary)]">
+									{entry.data.title}
+								</h2>
+
+								<p class="mb-4 line-clamp-3 flex-1 text-sm leading-6 text-75">
+									{entry.data.description || "暂无简介"}
+								</p>
+
+								{entry.data.tags.length > 0 && (
+									<div class="flex flex-wrap gap-2">
+										{entry.data.tags.slice(0, 3).map((tag) => (
+											<span class="rounded-lg bg-[var(--btn-regular-bg)] px-2.5 py-1 text-xs text-50 transition">
+												{tag.trim()}
+											</span>
+										))}
+									</div>
+								)}
+							</div>
+						</a>
+					);
+				})}
+			</section>
+		) : (
+			<section class="card-base rounded-[var(--radius-large)] px-6 py-12 text-center md:px-9">
+				<Icon
+					name="material-symbols:movie-outline-rounded"
+					class="mx-auto mb-4 text-6xl text-[var(--primary)] opacity-70"
+				/>
+				<h2 class="mb-2 text-2xl font-bold text-90">还没有动画文章</h2>
+				<p class="text-75">
+					给文章添加 `Anime` 分类，或添加 `anime` / `动画` 标签后，会显示在这里。
+				</p>
+			</section>
+		)
+	}
+</MainGridLayout>
+
